@@ -11,11 +11,15 @@ from rest_framework.decorators import api_view
 from twilio.rest import Client
 
 
+# * models Import
+from .models import OTPVerifiaction
+from .models import CustomUser
+
+#* Errors
+from django.db import IntegrityError
 
 
 # * Generating OTP
-
-
 def generateOTP():
     digits = "0123456789"
     OTP = ""
@@ -24,34 +28,72 @@ def generateOTP():
 
     return OTP
 
-OTP = generateOTP()
-
 
 # *Checks OTP with the otp recevied from the GET Request
 
-
-@api_view(['GET'])
-def SendOTP(request, number):
+def generatingOTP(number):
     number_with_code = "+91"+number
-    
-    account_sid = 'AC6593b5edf2aaa3acfcb8e796bd76fd55'
-    auth_token = '5e5ed6796e2a67dff536796048073019'
-    client = Client(account_sid, auth_token)
+    OTP = generateOTP()
+    # account_sid = 'AC6593b5edf2aaa3acfcb8e796bd76fd55'
+    # auth_token = 'eff74dbf93b705721502f7fc4a4dbe3f'
+    # client = Client(account_sid, auth_token)
 
-    message = client.messages \
-                    .create(
-                        body="Thank you for Registering on GFL your OTP is "+OTP,
-                        from_='+12082617126',
-                        to=number_with_code
-                    )
+    # message = client.messages \
+    #                 .create(
+    #                     body="Thank you for Registering on GFL your OTP is "+OTP,
+    #                     from_='+12082617126',
+    #                     to=number_with_code
+    #                 )
 
-    return Response({"msg": "OTP sent"})
+    return OTP
 
 
-@api_view(['GET'])
-def checkotp(request, otp):
-    print(OTP)
-    if OTP == otp:
+# * Checking the OTP
+
+@api_view(['GET', 'POST'])
+def otpGeneration(request):
+    number = request.data['number']
+    generatedOTP = generatingOTP(number)
+    if generatedOTP:
+        data = OTPVerifiaction(phone_number=number, otp=generatedOTP)
+        data.save()
+        print(generatedOTP)
+        return Response({"OTPSent": True})
+    else:
+        return Response({"OTPSent": False})
+
+
+@api_view(['PUT'])
+def checkOTP(request):
+    number = request.data['number']
+    otp = request.data['otp']
+    generatedOTP = OTPVerifiaction.objects.filter(
+        phone_number=number).values_list('otp')
+    if generatedOTP[0][0] == otp:
+        data = OTPVerifiaction.objects.get(phone_number=number)
+        data.is_verfied = True
+        data.save()
         return Response({"status": True})
+
     else:
         return Response({"status": False})
+
+
+@api_view(['POST'])
+def registerUser(request):
+    user_name = request.data['username']
+    email = request.data['email']
+    contact_number = request.data['number']
+    password = request.data['password']
+    user = CustomUser(user_name = user_name)
+    user.email = email
+    user.contact_number = contact_number
+    user.set_password(password)
+    try:
+        user.save()
+        otp_clutter = OTPVerifiaction.objects.get(phone_number = contact_number)
+        otp_clutter.delete()
+        return Response({"IntegrityError": False})
+    except IntegrityError as e:
+        return Response({"IntegrityError" : True})
+    

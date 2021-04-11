@@ -3,8 +3,7 @@ from accounts import views
 
 
 urlpatterns = [
-    path('checkotp/<str:otp>', views.checkotp ),
-    path('sendotp/<str:number>', views.SendOTP ),
-
-
+    path('checkOTP/', views.checkOTP ),
+    path('sendOTP/',views.otpGeneration),
+    path('registerUser/',views.registerUser)
 ]
