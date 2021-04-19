@@ -19,7 +19,7 @@ from .models import CustomUser
 from django.db import IntegrityError
 
 
-# * Generating OTP
+# * Generating 4-Digit Random Numbers
 def generateOTP():
     digits = "0123456789"
     OTP = ""
@@ -34,6 +34,8 @@ def generateOTP():
 def generatingOTP(number):
     number_with_code = "+91"+number
     OTP = generateOTP()
+
+    #! Code for Twilio 
     # account_sid = 'AC6593b5edf2aaa3acfcb8e796bd76fd55'
     # auth_token = 'eff74dbf93b705721502f7fc4a4dbe3f'
     # client = Client(account_sid, auth_token)
@@ -48,8 +50,7 @@ def generatingOTP(number):
     return OTP
 
 
-# * Checking the OTP
-
+# * Generating the OTP
 @api_view(['GET', 'POST'])
 def otpGeneration(request):
     number = request.data['number']
@@ -62,7 +63,7 @@ def otpGeneration(request):
     else:
         return Response({"OTPSent": False})
 
-
+#* Comparing the User OTP with the OTP stored in DataBase
 @api_view(['PUT'])
 def checkOTP(request):
     number = request.data['number']
@@ -78,7 +79,7 @@ def checkOTP(request):
     else:
         return Response({"status": False})
 
-
+#* Registering the user & deleting the verified OTP
 @api_view(['POST'])
 def registerUser(request):
     user_name = request.data['username']
