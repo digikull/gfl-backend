@@ -11,9 +11,11 @@ from .models import CustomUser
 # * Rest Framework Imports
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
+from rest_framework.views import APIView
 
 # * Twilio Imports
-from twilio.rest import Client
+# from twilio.rest import Client
+import jwt ,datetime
 
 
 # # * Generating 4-Digit Random Numbers
@@ -44,6 +46,34 @@ from twilio.rest import Client
 
 #     return OTP
 
+
+class LoginApi(APIView):
+    def post(self, request):
+        print(request.data, 'data')
+        phone = request.data.get('phone')
+        password = request.data.get('password')
+
+        user = User.objects.filter(phone=phone).first()
+
+        if user is None:
+            raise AuthenticationFailed('user not found')
+        if not user.check_password(password):
+            raise AuthenticationFailed('incorrect password')
+        payload = {
+            'id' : user.id ,
+            'exp' : datetime.datetime.utcnow()+ datetime.timedelta(minutes=60),
+            'iat' : datetime.datetime.utcnow()
+        }
+
+        token =jwt.encode(payload, "secret", algorithm="HS256")
+        response = Response()
+
+        response.set_cookie(key='jwt',value=token,httponly=True)
+        response.data={
+           'jwt' : token 
+          
+            }
+        return response
 
 # * Generating the OTP
 @api_view(['GET', 'POST'])

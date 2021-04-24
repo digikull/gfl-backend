@@ -5,5 +5,6 @@ from accounts import views
 urlpatterns = [
     path('checkOTP/', views.checkOTP ),
     path('sendOTP/',views.otpGeneration),
-    path('registerUser/',views.registerUser)
+    path('registerUser/',views.registerUser),
+    path('login/',views.LoginApi.as_view())
 ]
